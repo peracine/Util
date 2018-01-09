@@ -8,14 +8,24 @@ namespace Util.Retry
     {
         private readonly ILogger _logger;
         private readonly TimeSpan Default_Delay = TimeSpan.FromMilliseconds(500);
-        private readonly int Maximum_Delay = 60000;
+        private readonly int Maximum_Delay = 30000;
 
         public Retry(ILogger logger)
         {
             _logger = logger ?? throw new ArgumentNullException("'logger' parameter cannot be null.");
         }
 
-        public async Task RetryOnExceptionAsync<TException>(Func<Task> operation, BackoffType backoffType = BackoffType.Fixed, uint maxAttempts = 10, TimeSpan? delay = null)
+        /// <summary>
+        /// Calls [maxAttempts] an async function [operation]
+        /// Implement the try pattern
+        /// </summary>
+        /// <typeparam name="TException"></typeparam>
+        /// <param name="operation">Not null</param>
+        /// <param name="backoffType">Fixed default</param>
+        /// <param name="maxAttempts">5 default</param>
+        /// <param name="delay">In milliseconds, 500 default</param>
+        /// <returns></returns>
+        public async Task RetryOnExceptionAsync<TException>(Func<Task> operation, BackoffType backoffType = BackoffType.Fixed, uint maxAttempts = 5, TimeSpan? delay = null)
             where TException : Exception
         {
             if (operation == null)
@@ -35,11 +45,11 @@ namespace Util.Retry
                 {
                     if (attempt == maxAttempts)
                     {
-                        _logger.LogError(exception, $"Cannot execute the operation after {maxAttempts} attempts.");
+                        _logger.LogError(exception, $"Could not execute the operation after {maxAttempts} attempts.");
                         throw;
                     }
 
-                    _logger.LogWarning(exception, $"Exception on attempt {attempt + 1} of {maxAttempts}.");
+                    _logger.LogWarning(exception, $"Exception {exception.GetType().Name} on attempt {attempt + 1} of {maxAttempts}.");
 
                     await Task.Delay(GetDelay(backoffType, attempt, delay.Value));
                 }
@@ -54,7 +64,7 @@ namespace Util.Retry
                     return Convert.ToInt32(attempt * delay.TotalMilliseconds);
 
                 case BackoffType.Exponential: // IEEE Standard 802.3-2008
-                    return Convert.ToInt32((Math.Pow(2, Convert.ToDouble(attempt)) - 1) / 2);
+                    return Convert.ToInt32(delay.TotalMilliseconds * (Math.Pow(2, Convert.ToDouble(attempt)) - 1) / 2);
 
                 case BackoffType.Random:
                     var random = new Random();
