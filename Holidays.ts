@@ -1,8 +1,8 @@
-function resetTime(date: any) {
+function resetTime(date: Date) {
     return new Date(date.setUTCHours(24, 0, 0, 0));
 }
 
-function addDays(date: any, days: number) {
+function addDays(date: Date, days: number) {
     date = new Date(date);
     return new Date(date.setDate(date.getDate() + days));
 }
