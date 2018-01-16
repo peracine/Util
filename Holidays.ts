@@ -44,7 +44,7 @@ export function getHolidays(year: number) {
 }
 
 export function isHoliday(date: Date) {
-    if (!(date instanceof Date) || Object.prototype.toString.call(date) !== '[object Date]') {
+    if (Object.prototype.toString.call(date) !== '[object Date]') {
         throw new TypeError('date parameter is invalid.');
     }
 
